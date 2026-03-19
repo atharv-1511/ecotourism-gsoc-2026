@@ -1,0 +1,9 @@
+# Exclude from shinyapps.io deployment
+*.html
+*.qmd
+*.md
+*.Rmd
+extract_data.R
+.Rproj.user/
+.Rhistory
+.RData

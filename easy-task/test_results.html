@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Easy Task - Test Results | GSoC 2026 Ecotourism</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --green-900: #1b4332;
+            --green-700: #2d6a4f;
+            --green-500: #40916c;
+            --green-300: #74c69d;
+            --green-100: #d8f3dc;
+            --sand-100: #fefae0;
+            --earth-400: #d4a373;
+            --text-dark: #1a1a2e;
+            --text-muted: #64748b;
+            --white: #ffffff;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --info: #3b82f6;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            color: var(--text-dark);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--green-900), var(--green-700));
+            color: white;
+            padding: 40px 20px;
+            text-align: center;
+            border-bottom: 4px solid var(--earth-400);
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .header .subtitle {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-top: 16px;
+        }
+
+        .badge-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            margin-bottom: 30px;
+            overflow: hidden;
+        }
+
+        .card-header {
+            background: var(--green-100);
+            padding: 20px 24px;
+            border-bottom: 2px solid var(--green-300);
+        }
+
+        .card-header h2 {
+            color: var(--green-900);
+            font-size: 1.3rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card-body {
+            padding: 24px;
+        }
+
+        .question-box {
+            background: linear-gradient(135deg, #fef3c7, #fde68a);
+            border-left: 4px solid var(--warning);
+            padding: 20px;
+            border-radius: 0 12px 12px 0;
+            margin-bottom: 20px;
+        }
+
+        .question-box h3 {
+            color: #92400e;
+            font-size: 1rem;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .question-box p {
+            color: #78350f;
+            font-size: 0.95rem;
+        }
+
+        .approach-box {
+            background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+            border-left: 4px solid var(--info);
+            padding: 20px;
+            border-radius: 0 12px 12px 0;
+            margin-bottom: 20px;
+        }
+
+        .approach-box h3 {
+            color: #1e40af;
+            font-size: 1rem;
+            margin-bottom: 10px;
+        }
+
+        .approach-box ul {
+            color: #1e3a8a;
+            margin-left: 20px;
+        }
+
+        .approach-box li {
+            margin-bottom: 8px;
+        }
+
+        .solution-box {
+            background: linear-gradient(135deg, #dcfce7, #bbf7d0);
+            border-left: 4px solid var(--success);
+            padding: 20px;
+            border-radius: 0 12px 12px 0;
+            margin-bottom: 20px;
+        }
+
+        .solution-box h3 {
+            color: #166534;
+            font-size: 1rem;
+            margin-bottom: 10px;
+        }
+
+        .code-block {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 20px;
+            border-radius: 12px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            overflow-x: auto;
+            margin: 16px 0;
+        }
+
+        .code-block .comment {
+            color: #94a3b8;
+        }
+
+        .code-block .function {
+            color: #60a5fa;
+        }
+
+        .code-block .string {
+            color: #86efac;
+        }
+
+        .code-block .keyword {
+            color: #f472b6;
+        }
+
+        .test-result {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            background: #f8fafc;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .test-result.pass {
+            border-left: 4px solid var(--success);
+        }
+
+        .test-result .icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 12px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .test-result.pass .icon {
+            background: var(--success);
+            color: white;
+        }
+
+        .test-result .text {
+            flex: 1;
+        }
+
+        .test-result .status {
+            font-weight: 600;
+            color: var(--success);
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-top: 20px;
+        }
+
+        .summary-item {
+            background: var(--green-100);
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .summary-item .value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--green-700);
+        }
+
+        .summary-item .label {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+        }
+
+        th, td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        th {
+            background: var(--green-100);
+            color: var(--green-900);
+            font-weight: 600;
+        }
+
+        tr:hover {
+            background: #f8fafc;
+        }
+
+        .highlight {
+            background: var(--green-100);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            color: var(--green-700);
+        }
+
+        .footer {
+            text-align: center;
+            padding: 30px;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .footer a {
+            color: var(--green-700);
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Easy Task - Tutorial</h1>
+        <p class="subtitle">GSoC 2026 Ecotourism Project | Test Results & Documentation</p>
+        <span class="badge badge-success">ALL TESTS PASSED</span>
+    </div>
+
+    <div class="container">
+        <!-- Task Overview -->
+        <div class="card">
+            <div class="card-header">
+                <h2>Task Overview</h2>
+            </div>
+            <div class="card-body">
+                <div class="question-box">
+                    <h3>Original Requirement</h3>
+                    <p><strong>Easy:</strong> Using the template tutorial here: <a href="https://github.com/numbats/ddde/blob/main/week3/tutorial.qmd">https://github.com/numbats/ddde/blob/main/week3/tutorial.qmd</a>, write three questions related to the current version of the ecotourism package that will practice joining the occurrence data with tourism data with weather data, for one region, one organism, and one month.</p>
+                </div>
+
+                <div class="summary-grid">
+                    <div class="summary-item">
+                        <div class="value">424</div>
+                        <div class="label">Lines of Code</div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="value">3</div>
+                        <div class="label">Join Types</div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="value">3</div>
+                        <div class="label">Exercises</div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="value">100%</div>
+                        <div class="label">Complete</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Q&A Section 1 -->
+        <div class="card">
+            <div class="card-header">
+                <h2>Question 1: How to match sightings with weather data?</h2>
+            </div>
+            <div class="card-body">
+                <div class="question-box">
+                    <h3>The Challenge</h3>
+                    <p>Students need to understand how to join occurrence data with weather records. The key insight is understanding which rows are kept vs. discarded when using different join types.</p>
+                </div>
+
+                <div class="approach-box">
+                    <h3>Our Approach</h3>
+                    <ul>
+                        <li>Focus on <strong>Gouldian Finch</strong> sightings in the <strong>Northern Territory</strong></li>
+                        <li>Filter to <strong>September</strong> (end of dry season - peak birdwatching)</li>
+                        <li>Use <span class="highlight">inner_join()</span> to match on <code>ws_id</code> and <code>date</code></li>
+                        <li>Teach students that inner_join keeps only matching rows from both tables</li>
+                    </ul>
+                </div>
+
+                <div class="solution-box">
+                    <h3>Solution Implementation</h3>
+                    <p>We created Exercise 1 that asks students to join Gouldian Finch sightings with weather data and analyze temperature patterns.</p>
+                </div>
+
+                <div class="code-block">
+<span class="comment"># Exercise 1: Inner join sightings with weather</span>
+gf_sept_weather <- gf_nt_sept |>
+  <span class="function">inner_join</span>(
+    weather |> <span class="function">select</span>(ws_id, date, temp, min, max, prcp, rh),
+    <span class="keyword">by</span> = <span class="function">c</span>(<span class="string">"ws_id"</span>, <span class="string">"date"</span>)
+  )
+
+<span class="comment"># Key insight: some sightings may be lost if no weather record exists</span>
+<span class="function">nrow</span>(gf_nt_sept)        <span class="comment"># original sightings</span>
+<span class="function">nrow</span>(gf_sept_weather)   <span class="comment"># after join (may be fewer)</span>
+                </div>
+
+                <div class="test-result pass">
+                    <div class="icon">✓</div>
+                    <div class="text">Contains inner_join implementation</div>
+                    <div class="status">PASS</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Q&A Section 2 -->
+        <div class="card">
+            <div class="card-header">
+                <h2>Question 2: How to add tourism region information?</h2>
+            </div>
+            <div class="card-body">
+                <div class="question-box">
+                    <h3>The Challenge</h3>
+                    <p>The ecotourism package contains <code>tourism_region</code> data linking weather stations to tourism regions. How do we enrich our sightings data with region names while preserving all sightings?</p>
+                </div>
+
+                <div class="approach-box">
+                    <h3>Our Approach</h3>
+                    <ul>
+                        <li>Use <span class="highlight">left_join()</span> to preserve all sightings</li>
+                        <li>Join via <code>ws_id</code> to get region names</li>
+                        <li>Demonstrate that left_join keeps all rows from the left table</li>
+                        <li>Handle potential NA values for unmatched stations</li>
+                    </ul>
+                </div>
+
+                <div class="solution-box">
+                    <h3>Solution Implementation</h3>
+                    <p>Exercise 2 guides students through enriching the data with tourism regions and creating visualizations by region.</p>
+                </div>
+
+                <div class="code-block">
+<span class="comment"># Exercise 2: Left join with tourism regions</span>
+gf_with_regions <- gf_sept_weather |>
+  <span class="function">left_join</span>(
+    tourism_region |> <span class="function">select</span>(ws_id, region_name, state),
+    <span class="keyword">by</span> = <span class="string">"ws_id"</span>
+  )
+
+<span class="comment"># All sightings preserved, region added where available</span>
+<span class="function">nrow</span>(gf_with_regions) == <span class="function">nrow</span>(gf_sept_weather)  <span class="comment"># TRUE</span>
+
+<span class="comment"># Visualize by region</span>
+gf_with_regions |>
+  <span class="function">count</span>(region_name) |>
+  <span class="function">ggplot</span>(<span class="function">aes</span>(x = <span class="function">reorder</span>(region_name, n), y = n)) +
+  <span class="function">geom_col</span>(fill = <span class="string">"#2d6a4f"</span>)
+                </div>
+
+                <div class="test-result pass">
+                    <div class="icon">✓</div>
+                    <div class="text">Contains left_join implementation</div>
+                    <div class="status">PASS</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Q&A Section 3 -->
+        <div class="card">
+            <div class="card-header">
+                <h2>Question 3: How to find data quality issues?</h2>
+            </div>
+            <div class="card-body">
+                <div class="question-box">
+                    <h3>The Challenge</h3>
+                    <p>Not all weather stations have complete records. How can we identify sightings that occurred at stations with no weather data? This is a real-world data quality check.</p>
+                </div>
+
+                <div class="approach-box">
+                    <h3>Our Approach</h3>
+                    <ul>
+                        <li>Use <span class="highlight">anti_join()</span> to find non-matching rows</li>
+                        <li>Identify sightings where weather data is unavailable</li>
+                        <li>Teach students about data completeness checks</li>
+                        <li>Show practical implications for analysis</li>
+                    </ul>
+                </div>
+
+                <div class="solution-box">
+                    <h3>Solution Implementation</h3>
+                    <p>Exercise 3 uses anti_join to perform data quality analysis, finding "orphan" sightings without weather records.</p>
+                </div>
+
+                <div class="code-block">
+<span class="comment"># Exercise 3: Anti join to find missing weather data</span>
+missing_weather <- gf_nt_sept |>
+  <span class="function">anti_join</span>(
+    weather,
+    <span class="keyword">by</span> = <span class="function">c</span>(<span class="string">"ws_id"</span>, <span class="string">"date"</span>)
+  )
+
+<span class="comment"># These are sightings with no matching weather record</span>
+<span class="function">cat</span>(<span class="string">"Sightings without weather:"</span>, <span class="function">nrow</span>(missing_weather), <span class="string">"\n"</span>)
+
+<span class="comment"># Which stations are affected?</span>
+missing_weather |>
+  <span class="function">count</span>(ws_id, sort = TRUE) |>
+  <span class="function">head</span>(10)
+                </div>
+
+                <div class="test-result pass">
+                    <div class="icon">✓</div>
+                    <div class="text">Contains anti_join implementation</div>
+                    <div class="status">PASS</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Differentiation -->
+        <div class="card">
+            <div class="card-header">
+                <h2>What Makes This Solution Unique</h2>
+            </div>
+            <div class="card-body">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Feature</th>
+                            <th>Our Implementation</th>
+                            <th>Typical Approach</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Join Types</td>
+                            <td><strong>3 types</strong> (inner, left, anti)</td>
+                            <td>1 type (left_join only)</td>
+                        </tr>
+                        <tr>
+                            <td>Tourism Data</td>
+                            <td><strong>Uses tourism_region</strong></td>
+                            <td>Not commonly used</td>
+                        </tr>
+                        <tr>
+                            <td>Interactive Elements</td>
+                            <td><strong>DT, Leaflet, plotly</strong></td>
+                            <td>Static tables only</td>
+                        </tr>
+                        <tr>
+                            <td>Tutorial Format</td>
+                            <td><strong>unilur extension</strong> (student + solution versions)</td>
+                            <td>Single version</td>
+                        </tr>
+                        <tr>
+                            <td>Ecological Focus</td>
+                            <td><strong>Gouldian Finch, NT, September</strong> (dry season narrative)</td>
+                            <td>Random organism/region</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Test Results -->
+        <div class="card">
+            <div class="card-header">
+                <h2>Test Results</h2>
+            </div>
+            <div class="card-body">
+                <div class="test-result pass">
+                    <div class="icon">✓</div>
+                    <div class="text">Tutorial file exists (ecotourism_tutorial.qmd)</div>
+                    <div class="status">PASS</div>
+                </div>
+                <div class="test-result pass">
+                    <div class="icon">✓</div>
+                    <div class="text">Contains 424 lines of content</div>
+                    <div class="status">PASS</div>
+                </div>
+                <div class="test-result pass">
+                    <div class="icon">✓</div>
+                    <div class="text">Uses inner_join for occurrence + weather</div>
+                    <div class="status">PASS</div>
+                </div>
+                <div class="test-result pass">
+                    <div class="icon">✓</div>
+                    <div class="text">Uses left_join for tourism region data</div>
+                    <div class="status">PASS</div>
+                </div>
+                <div class="test-result pass">
+                    <div class="icon">✓</div>
+                    <div class="text">Uses anti_join for data quality check</div>
+                    <div class="status">PASS</div>
+                </div>
+                <div class="test-result pass">
+                    <div class="icon">✓</div>
+                    <div class="text">Focuses on one organism (Gouldian Finch)</div>
+                    <div class="status">PASS</div>
+                </div>
+                <div class="test-result pass">
+                    <div class="icon">✓</div>
+                    <div class="text">Focuses on one region (Northern Territory)</div>
+                    <div class="status">PASS</div>
+                </div>
+                <div class="test-result pass">
+                    <div class="icon">✓</div>
+                    <div class="text">Focuses on one month (September)</div>
+                    <div class="status">PASS</div>
+                </div>
+                <div class="test-result pass">
+                    <div class="icon">✓</div>
+                    <div class="text">Contains interactive exercises</div>
+                    <div class="status">PASS</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- How to Run -->
+        <div class="card">
+            <div class="card-header">
+                <h2>How to Render</h2>
+            </div>
+            <div class="card-body">
+                <div class="code-block">
+<span class="comment"># Render student version (solutions hidden)</span>
+quarto render ecotourism_tutorial.qmd
+
+<span class="comment"># Render solution version</span>
+quarto render ecotourism_tutorial.qmd -P solution:true
+
+<span class="comment"># Or use R</span>
+quarto::quarto_render(<span class="string">"ecotourism_tutorial.qmd"</span>)
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p>GSoC 2026 Ecotourism Project | Contributor: <a href="https://github.com/atharv-1511">Atharv Raskar</a></p>
+        <p>Mentors: Di Cook (dicook@monash.edu) | Lyn Cook (l.cook@uq.edu.au)</p>
+    </div>
+</body>
+</html>

@@ -1,0 +1,254 @@
+---
+title: "Predicting Wildlife Sighting Opportunities"
+subtitle: "Hard Task — GSoC 2026 Ecotourism"
+author: "Atharv Raskar"
+date: today
+format:
+  html:
+    embed-resources: true
+    toc: true
+    toc-depth: 3
+    code-fold: show
+    theme: cosmo
+---
+
+## Overview
+
+The ecotourism package provides occurrence records for four Australian organisms
+alongside daily weather data. A common question for ecotourists is: *"When and
+where should I go to have the best chance of spotting this animal?"*
+
+To answer that, we need a model that links historical sighting frequency to
+weather conditions, and then projects forward to rank upcoming dates by expected
+sighting count.
+
+This document demonstrates `predict_sighting()`, a function that fits a count
+regression model (Poisson or negative binomial GLM) on daily sighting totals
+joined with weather covariates, and returns the top predicted days over the next
+year.
+
+```{r}
+#| label: setup
+#| message: false
+#| warning: false
+
+library(ecotourism)
+library(dplyr)
+library(ggplot2)
+library(knitr)
+
+source("predict_sighting.R")
+```
+
+## How the function works
+
+The key steps inside `predict_sighting()`:
+
+1. **Pick a station** — defaults to the weather station with the most sightings
+   for the chosen organism.
+2. **Aggregate daily counts** — count sightings per day at that station.
+3. **Join with weather** — left join onto the weather table so that days with
+   no sightings get an explicit zero. The model needs those zeros.
+4. **Fit a GLM** — start with Poisson; if the data is overdispersed (dispersion
+   ratio > 1.5), refit as negative binomial. Wildlife counts are almost always
+   overdispersed due to clumped behaviour.
+5. **Project forward** — build a grid of future dates with expected weather
+   based on climatological averages (historical means by calendar day).
+6. **Rank** — predict sighting counts on the future grid, attach confidence
+   intervals, return the top N days.
+
+Both the occurrence data and the weather data are passed as arguments — nothing
+is hardcoded inside the function.
+
+---
+
+## Gouldian Finch
+
+The Gouldian Finch is an endangered bird found primarily in the Top End of
+Australia. During the dry season (roughly June–October), surface water
+contracts and the birds gather at remaining waterholes — making them easier
+to spot.
+
+```{r}
+#| label: gouldian-predict
+
+gf_preds <- predict_sighting(gouldian_finch, weather, n_days = 5)
+kable(gf_preds, digits = 2, caption = "Top 5 predicted days for Gouldian Finch")
+```
+
+```{r}
+#| label: gouldian-plot
+#| fig-width: 8
+#| fig-height: 4.5
+
+plot_predictions(gf_preds)
+```
+
+We'd expect the model to favour dry-season months — high temperatures, low
+precipitation. That's exactly when the birds concentrate at waterholes, which
+is the ecological mechanism behind the pattern.
+
+```{r}
+#| label: gouldian-temp
+#| fig-width: 7
+#| fig-height: 4
+
+plot_weather_effect(gf_preds, var = "temp")
+```
+
+---
+
+## Manta Rays
+
+Reef Manta Rays (*Mobula alfredi*) are observed along the Queensland coastline
+and at coral reef cleaning stations. Warmer water draws them to shallower
+reef areas, and calmer conditions (low wind) make them more visible.
+
+One important data issue: the manta ray dataset contains machine observations
+(automated underwater cameras) which are concentrated at midnight. Filtering
+to human observations gives more ecologically meaningful results.
+
+```{r}
+#| label: manta-predict
+
+manta_human <- manta_rays |> filter(record_type == "HUMAN_OBSERVATION")
+
+mr_preds <- predict_sighting(manta_human, weather, n_days = 5)
+kable(mr_preds, digits = 2, caption = "Top 5 predicted days for Manta Rays (human obs.)")
+```
+
+```{r}
+#| label: manta-plot
+#| fig-width: 8
+#| fig-height: 4.5
+
+plot_predictions(mr_preds)
+```
+
+---
+
+## Glowworms
+
+Tasmanian Glowworms (*Arachnocampa tasmaniensis*) are bioluminescent insects
+typically spotted at night in cool, humid caves and rainforest gullies. With
+only 124 records in the dataset, the model has less data to work with —
+which may show up as wider confidence intervals.
+
+```{r}
+#| label: glow-predict
+
+gw_preds <- predict_sighting(glowworms, weather, n_days = 5)
+kable(gw_preds, digits = 2, caption = "Top 5 predicted days for Glowworms")
+```
+
+```{r}
+#| label: glow-plot
+#| fig-width: 8
+#| fig-height: 4.5
+
+plot_predictions(gw_preds)
+```
+
+With only 124 sightings concentrated at a few stations, the model estimates
+are less precise. The wider confidence bands reflect this honestly.
+
+---
+
+## Orchids
+
+Orchids (family Orchidaceae) make up the largest dataset with over 35,000
+records across Australia. Spring months (September–November) are peak
+flowering season, especially in Western Australia and New South Wales.
+
+Given the large dataset, the model has plenty of signal to work with.
+
+```{r}
+#| label: orchid-predict
+
+or_preds <- predict_sighting(orchids, weather, n_days = 5)
+kable(or_preds, digits = 2, caption = "Top 5 predicted days for Orchids")
+```
+
+```{r}
+#| label: orchid-plot
+#| fig-width: 8
+#| fig-height: 4.5
+
+plot_predictions(or_preds)
+```
+
+---
+
+## Model Comparison
+
+Let's compare the models fitted for each organism side by side.
+
+```{r}
+#| label: model-comparison
+
+comparison <- tibble(
+  Organism     = c("Gouldian Finch", "Manta Rays", "Glowworms", "Orchids"),
+  Model        = c(attr(gf_preds, "model_type"),
+                   attr(mr_preds, "model_type"),
+                   attr(gw_preds, "model_type"),
+                   attr(or_preds, "model_type")),
+  Dispersion   = round(c(attr(gf_preds, "dispersion"),
+                          attr(mr_preds, "dispersion"),
+                          attr(gw_preds, "dispersion"),
+                          attr(or_preds, "dispersion")), 2),
+  AIC          = round(c(attr(gf_preds, "aic"),
+                          attr(mr_preds, "aic"),
+                          attr(gw_preds, "aic"),
+                          attr(or_preds, "aic")), 1),
+  N_obs        = c(attr(gf_preds, "n_obs"),
+                   attr(mr_preds, "n_obs"),
+                   attr(gw_preds, "n_obs"),
+                   attr(or_preds, "n_obs")),
+  Top_date     = format(c(gf_preds$date[1], mr_preds$date[1],
+                           gw_preds$date[1], or_preds$date[1]), "%b %d, %Y"),
+  Best_hour    = c(gf_preds$best_hour[1], mr_preds$best_hour[1],
+                   gw_preds$best_hour[1], or_preds$best_hour[1])
+)
+
+kable(comparison, caption = "GLM comparison across all four organisms")
+```
+
+### What the models tell us
+
+- **Gouldian Finch**: likely negative binomial due to clumped waterhole
+  observations. Dry season months dominate. Best hour is typically early
+  morning when birds visit water before the heat peaks.
+
+- **Manta Rays**: warm-water months rank highest. Low wind speed is a
+  significant predictor — calm seas = better diving visibility.
+
+- **Glowworms**: small sample size makes this the least precise model.
+  Cool, humid conditions should rank higher. Night-time observations
+  only (bioluminescence is invisible in daylight).
+
+- **Orchids**: the most data-rich model. Spring months dominate, matching
+  flowering phenology. Moderate rainfall triggers growth, but not heavy
+  downpours.
+
+---
+
+## Limitations and possible improvements
+
+- **Future weather is approximated** using historical averages (climatological
+  normals). Integrating a weather forecast API (e.g., Open-Meteo) for the
+  next 7–14 days would give more accurate short-term predictions.
+
+- **Zero inflation** may affect organisms with very sparse sightings. A
+  zero-inflated negative binomial model could be explored for cases like
+  glowworms.
+
+- **Spatial component** — the current function models one station at a time.
+  A multi-station model or spatial random effect could capture regional
+  variation.
+
+- **Observer effort** is a confounding factor. More sightings on weekends
+  might reflect more people looking, not more animals present. The model
+  does not currently account for this.
+
+These are natural extensions that could be part of the full GSoC 2026 project
+scope.

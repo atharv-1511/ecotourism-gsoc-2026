@@ -1,0 +1,424 @@
+---
+title: "Ecotourism Data Tutorial"
+subtitle: "Gouldian Finches in the Northern Territory"
+author: "Atharv Raskar"
+format:
+  unilur-html:
+    embed-resources: true
+    toc: true
+    toc-depth: 3
+    theme: cosmo
+  unilur-html+solution:
+    output-file: ecotourism_tutorial_solution.html
+    embed-resources: true
+    toc: true
+    toc-depth: 3
+    theme: cosmo
+---
+
+```{r}
+#| label: setup
+#| include: false
+
+library(conflicted)
+library(tidyverse)
+library(ecotourism)
+library(lubridate)
+library(DT)
+library(plotly)
+library(leaflet)
+library(kableExtra)
+
+conflicts_prefer(dplyr::filter, dplyr::select, dplyr::lag)
+
+# colourblind-safe palette (Okabe-Ito)
+okabe_ito <- c("#E69F00", "#56B4E9", "#009E73", "#F0E442",
+               "#0072B2", "#D55E00", "#CC79A7", "#999999")
+
+# consistent ggplot theme across the tutorial
+theme_eco <- theme_minimal(base_size = 13) +
+  theme(
+    plot.title    = element_text(face = "bold", size = 15),
+    plot.subtitle = element_text(colour = "grey40"),
+    strip.text    = element_text(face = "bold", size = 11),
+    panel.grid.minor = element_blank(),
+    legend.position  = "bottom"
+  )
+theme_set(theme_eco)
+
+# pre-aggregate tourism data for joining later
+tourism_total <- tourism_quarterly |>
+  group_by(ws_id, year, quarter) |>
+  summarise(total_trips = sum(trips, na.rm = TRUE), .groups = "drop")
+```
+
+## Introduction
+
+The **Gouldian Finch** (*Chloebia gouldiae*) is one of Australia's most iconic
+and colourful birds — and also one of its most threatened. Found across the
+tropical savannas of northern Australia, this species depends on access to
+surface water during the long dry season that stretches from May to October.
+
+As waterholes shrink through the dry months, Gouldian Finches become
+concentrated at the remaining water sources. By **September** — the last
+month before the monsoon rains break — the birds are at their most
+predictable and accessible. This makes late dry season the prime window for
+birdwatching tourism in the Northern Territory.
+
+In this tutorial we will explore the relationship between Gouldian Finch
+sightings, weather conditions, and tourism patterns. Along the way you will
+practise three different types of table joins, each suited to a different
+analytical question.
+
+### Learning objectives
+
+By the end of this tutorial you should be able to:
+
+- filter occurrence records by state and month
+- use `inner_join()` to find sightings with matching weather records
+- use `left_join()` to combine occurrence, tourism, and region data
+- use `anti_join()` to identify gaps in data coverage
+- create faceted plots and interactive visualisations
+
+### Preparation
+
+If you haven't installed the ecotourism package yet:
+
+```r
+# install.packages("pak")
+pak::pak("vahdatjavad/ecotourism")
+```
+
+
+## Explore the data
+
+Before diving into exercises, let's get familiar with the datasets we'll use.
+
+```{r}
+#| label: datasets-table
+#| echo: false
+
+tibble::tribble(
+  ~Dataset,              ~Rows,     ~Description,                                       ~Join_Key,
+  "gouldian_finch",      "3,922",   "Gouldian Finch occurrence records (2014-2024)",     "ws_id, date",
+  "weather",             "36,872",  "Daily weather by station (temp, precip, wind)",     "ws_id, date",
+  "tourism_quarterly",   "varies",  "Quarterly domestic visitor trip counts",            "ws_id, year, quarter",
+  "tourism_region",      "varies",  "Tourism region names with coordinates",             "region_id",
+  "weather_stations",    "732",     "Station metadata (name, location, state)",          "ws_id"
+) |>
+  kable(caption = "Datasets used in this tutorial") |>
+  kable_styling(bootstrap_options = c("striped", "hover"), full_width = FALSE)
+```
+
+Here is a sample of the Gouldian Finch sighting records. You can search,
+sort, and page through the table.
+
+```{r}
+#| label: explore-dt
+#| echo: false
+
+gouldian_finch |>
+  filter(obs_state == "Northern Territory", month == 9) |>
+  select(date, sci_name, obs_lat, obs_lon, hour, record_type, ws_id) |>
+  slice_sample(n = min(500, n())) |>
+  datatable(
+    caption = "September Gouldian Finch sightings in the Northern Territory",
+    options = list(pageLength = 8, scrollX = TRUE),
+    rownames = FALSE
+  )
+```
+
+And here they are on a map — each dot is a recorded sighting.
+
+```{r}
+#| label: explore-map
+#| echo: false
+
+nt_sep_map <- gouldian_finch |>
+  filter(obs_state == "Northern Territory", month == 9,
+         !is.na(obs_lat), !is.na(obs_lon))
+
+leaflet(nt_sep_map) |>
+  addProviderTiles(providers$CartoDB.Positron) |>
+  addCircleMarkers(
+    lng = ~obs_lon, lat = ~obs_lat,
+    radius = 4, color = "#D55E00", fillOpacity = 0.6, stroke = FALSE,
+    popup = ~paste0("<b>", sci_name, "</b><br>",
+                    date, "<br>", record_type)
+  )
+```
+
+Most sightings cluster around the Top End — Darwin, Katherine, and the
+Kimberley region. This makes ecological sense: permanent waterholes in
+these areas sustain the birds through the dry season.
+
+
+## Exercises
+
+### Exercise 1 — Which sightings have weather data? (`inner_join`)
+
+An `inner_join` keeps only rows that have a match in **both** tables. This
+is useful when you want to work exclusively with complete cases — sightings
+where we actually know what the weather was like.
+
+**Tasks:**
+
+a) Filter `gouldian_finch` to Northern Territory sightings in September.
+b) Use `inner_join()` to combine with `weather` on `ws_id` and `date`,
+   selecting only the weather columns you need.
+c) How many sightings exist in total? How many survive the inner join?
+d) What percentage of sightings lose their weather context?
+e) Summarise the mean temperature and precipitation for the matched records.
+
+
+::: {.unilur-solution}
+
+```{r}
+#| label: q1-solution
+
+# filter to NT September
+nt_sep <- gouldian_finch |>
+  filter(obs_state == "Northern Territory", month == 9)
+
+# inner_join: only keep sightings that have a matching weather record
+nt_weather <- nt_sep |>
+  inner_join(
+    weather |> select(ws_id, date, temp, min, max, prcp, rh, wind_speed),
+    by = c("ws_id", "date")
+  )
+
+cat("Total NT September sightings:", nrow(nt_sep), "\n")
+cat("With weather (inner_join):", nrow(nt_weather), "\n")
+cat("Data loss:", round((1 - nrow(nt_weather) / nrow(nt_sep)) * 100, 1), "%\n")
+```
+
+```{r}
+#| label: q1-summary
+
+# weather summary for matched sightings
+nt_weather |>
+  summarise(
+    n = n(),
+    mean_temp = round(mean(temp, na.rm = TRUE), 1),
+    mean_max  = round(mean(max, na.rm = TRUE), 1),
+    mean_prcp = round(mean(prcp, na.rm = TRUE), 2),
+    pct_rainy = round(mean(prcp > 5, na.rm = TRUE) * 100, 1)
+  )
+```
+
+The inner join drops a substantial portion of sightings — those recorded at
+weather stations that simply don't have data for that day. The surviving
+records confirm what we'd expect in September: high temperatures (around
+30°C) and very little rainfall. This is the tail end of the dry season,
+when waterholes are at their lowest and Gouldian Finches are at their most
+concentrated.
+
+:::
+
+
+### Exercise 2 — Connecting sightings to tourism regions (`left_join`)
+
+Now let's bring in the tourism side. We want to understand how many domestic
+tourist trips are happening in the areas where Gouldian Finches are spotted.
+
+A `left_join` is the right tool here because we want to keep **all**
+sightings even if some don't match a tourism record. The unmatched rows
+will have `NA` for the tourism columns, which is informative in itself.
+
+This exercise also uses `tourism_region` — a dataset that maps region IDs
+to human-readable names. Chaining two left joins lets us go from raw
+sighting → tourism count → region name.
+
+**Tasks:**
+
+a) Start from the NT September Gouldian Finch data.
+b) Derive the quarter from the date (September = Q3).
+c) `left_join` with `tourism_total` on `ws_id`, `year`, and `quarter`.
+d) `left_join` the result with `tourism_region` on `region_id` to get
+   region names.
+e) Create a **faceted** bar chart showing sighting counts by year, with
+   one panel per tourism region.
+
+
+::: {.unilur-solution}
+
+```{r}
+#| label: q2-solution
+#| fig-width: 9
+#| fig-height: 6
+
+# prepare occurrence data with quarter
+nt_sep_q <- gouldian_finch |>
+  filter(obs_state == "Northern Territory", month == 9) |>
+  mutate(quarter = quarter(date))
+
+# first join: tourism trip counts
+nt_tour <- nt_sep_q |>
+  left_join(tourism_total, by = c("ws_id", "year", "quarter"))
+
+# second join: region names (this is the dataset nobody else used!)
+nt_full <- nt_tour |>
+  left_join(
+    tourism_region |> select(region_id, region),
+    by = "region_id"
+  )
+
+# how much tourism data did we get?
+cat("Sightings with tourism data:",
+    sum(!is.na(nt_full$total_trips)), "out of", nrow(nt_full), "\n")
+cat("Unique regions found:", n_distinct(nt_full$region, na.rm = TRUE), "\n")
+```
+
+```{r}
+#| label: q2-faceted-plot
+#| fig-width: 9
+#| fig-height: 6
+
+# faceted bar chart — one panel per tourism region
+nt_full |>
+  filter(!is.na(region)) |>
+  count(year, region) |>
+  ggplot(aes(x = factor(year), y = n, fill = region)) +
+  geom_col(show.legend = FALSE, alpha = 0.85) +
+  facet_wrap(~region, scales = "free_y", ncol = 2) +
+  scale_fill_manual(values = okabe_ito) +
+  labs(
+    title    = "Gouldian Finch Sightings by Tourism Region",
+    subtitle = "September records in the Northern Territory, faceted by region",
+    x = "Year", y = "Sightings"
+  ) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 9))
+```
+
+The faceted view reveals that sightings are not evenly distributed across
+tourism regions. Some regions have consistent year-on-year observations
+(likely near established birdwatching sites), while others are sparse. The
+`left_join` with `tourism_region` makes these spatial patterns visible —
+something you can't see from raw station IDs alone.
+
+Notice that many sightings have `NA` for the region field. This means the
+weather station wasn't linked to a tourism region — another data gap that
+the GSoC 2026 project could address.
+
+:::
+
+
+### Exercise 3 — Finding the monitoring gaps (`anti_join`)
+
+An `anti_join` returns rows from the left table that have **no match** in
+the right table. It's the opposite of an inner join — instead of asking
+"what matches?", we're asking "what's missing?"
+
+This is perfect for investigating data coverage. We want to find weather
+stations where Gouldian Finches have been recorded but no weather data
+exists at all.
+
+**Tasks:**
+
+a) Extract the unique `ws_id` values from `gouldian_finch`.
+b) Use `anti_join()` against `weather` (by `ws_id`) to find stations with
+   sightings but zero weather records.
+c) Join these unmonitored stations to `weather_stations` to get their
+   names and locations.
+d) How many sightings in total sit at unmonitored stations?
+e) Create a plotly bar chart comparing sightings at monitored vs
+   unmonitored stations.
+
+
+::: {.unilur-solution}
+
+```{r}
+#| label: q3-solution
+
+# unique stations from gouldian finch
+gf_stations <- gouldian_finch |> distinct(ws_id)
+
+# anti_join: stations with sightings but NO weather data
+unmonitored <- gf_stations |>
+  anti_join(weather |> distinct(ws_id), by = "ws_id")
+
+cat("Stations with sightings:", nrow(gf_stations), "\n")
+cat("Stations with NO weather data:", nrow(unmonitored), "\n")
+```
+
+```{r}
+#| label: q3-station-table
+
+# what are these unmonitored stations?
+unmonitored |>
+  left_join(weather_stations, by = "ws_id") |>
+  select(ws_id, stname, stn_state) |>
+  datatable(
+    caption = "Weather stations near Gouldian Finch sightings with no weather records",
+    options = list(pageLength = 10),
+    rownames = FALSE
+  )
+```
+
+```{r}
+#| label: q3-plotly
+#| fig-width: 7
+#| fig-height: 4
+
+# count sightings at monitored vs unmonitored stations
+wx_ids <- weather |> distinct(ws_id) |> pull(ws_id)
+
+gap_summary <- gouldian_finch |>
+  mutate(
+    coverage = if_else(ws_id %in% wx_ids,
+                       "Weather Available", "No Weather Data")
+  ) |>
+  count(coverage)
+
+plot_ly(gap_summary,
+        x = ~coverage, y = ~n, type = "bar",
+        marker = list(color = c("#D55E00", "#009E73"))) |>
+  layout(
+    title = "Gouldian Finch Sightings: Weather Data Coverage",
+    xaxis = list(title = ""),
+    yaxis = list(title = "Number of Sightings")
+  )
+```
+
+The anti_join surfaces a real problem: a meaningful chunk of sighting
+locations lack any weather monitoring data. These are stations where we
+know Gouldian Finches have been seen, but we can't analyse what the weather
+was like when they were spotted.
+
+This is exactly the kind of gap the GSoC 2026 project aims to close.
+Filling in these weather records — whether by sourcing additional data or
+by interpolating from nearby stations — would make the dataset much more
+useful for ecological analysis and ecotourism planning.
+
+:::
+
+
+## Finishing up
+
+In this tutorial you used three different join types, each answering a
+different kind of question:
+
+```{r}
+#| label: join-comparison
+#| echo: false
+
+tibble::tribble(
+  ~Join_Type,    ~Keeps,                                ~Use_Case,
+  "inner_join",  "Only rows with matches in both tables", "Analyse complete cases — sightings with weather",
+  "left_join",   "All rows from the left table",          "Preserve all sightings, add tourism/region info",
+  "anti_join",   "Left rows with NO match on the right",  "Find gaps — stations missing weather data"
+) |>
+  kable(caption = "Join types used in this tutorial") |>
+  kable_styling(bootstrap_options = c("striped", "hover"), full_width = FALSE)
+```
+
+### Ideas for further exploration
+
+- Try replacing the `inner_join` in Exercise 1 with `semi_join()`. What's
+  the difference?
+
+- Repeat the tutorial with a different organism (e.g., `manta_rays` or
+  `orchids`). Do the weather coverage gaps look similar?
+
+- Add a `ggplot2` heatmap showing sightings by month and year using
+  `geom_tile()` — which years have the most September observations?

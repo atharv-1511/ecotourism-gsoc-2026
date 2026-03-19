@@ -1,0 +1,11 @@
+.Rhistory
+.RData
+.Rproj.user
+*.DS_Store
+rsconnect/
+_freeze/
+.quarto/
+
+# Exclude private folders
+contributor-analysis/
+Proposal 2025/
