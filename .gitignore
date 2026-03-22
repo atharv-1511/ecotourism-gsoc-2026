@@ -6,6 +6,8 @@ rsconnect/
 _freeze/
 .quarto/
 
-# Exclude private folders
+# Private analysis (not for public repo)
 contributor-analysis/
+contribution-analysis/
 Proposal 2025/
+DIFFERENTIATION_STRATEGY.md

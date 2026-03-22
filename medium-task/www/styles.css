@@ -66,11 +66,11 @@ body {
 
 /* ---- Sidebar ---- */
 .sidebar-panel {
-  width: 300px;
+  width: 320px;
   flex-shrink: 0;
   background: var(--green-900);
   color: var(--white);
-  padding: 24px;
+  padding: 28px;
   border-radius: var(--radius);
   box-shadow: var(--shadow);
   position: sticky;
@@ -81,9 +81,9 @@ body {
 }
 
 .sidebar-panel h3 {
-  font-size: 1.3rem;
-  margin: 0 0 16px 0;
-  padding-bottom: 12px;
+  font-size: 1.4rem;
+  margin: 0 0 18px 0;
+  padding-bottom: 14px;
   border-bottom: 2px solid var(--green-500);
   display: flex;
   align-items: center;
@@ -93,47 +93,82 @@ body {
 .sidebar-panel label,
 .sidebar-panel .control-label {
   color: var(--green-100) !important;
-  font-size: 1.1rem !important;
+  font-size: 1.15rem !important;
   font-weight: 600 !important;
-  margin-bottom: 8px !important;
+  margin-bottom: 10px !important;
   display: block;
 }
 
 .sidebar-panel .form-control,
 .sidebar-panel .selectize-input {
-  font-size: 1.1rem !important;
-  padding: 10px 12px !important;
+  font-size: 1.15rem !important;
+  padding: 12px 14px !important;
   border-radius: 8px !important;
 }
 
 .sidebar-panel .checkbox label,
 .sidebar-panel .checkbox-inline {
-  font-size: 1.1rem !important;
+  font-size: 1.15rem !important;
   color: var(--white) !important;
 }
 
 .sidebar-panel hr {
   border-color: var(--green-500);
-  margin: 20px 0;
+  margin: 22px 0;
 }
 
 .organism-info {
   background: rgba(255,255,255,0.1);
-  padding: 16px;
+  padding: 18px;
   border-radius: 8px;
-  margin: 16px 0;
-  font-size: 1rem;
-  line-height: 1.5;
+  margin: 18px 0;
+  font-size: 1.1rem;
+  line-height: 1.6;
 }
 
 .sidebar-footer {
-  margin-top: 20px;
-  font-size: 1rem;
-  opacity: 0.8;
+  margin-top: 24px;
+  font-size: 1.05rem;
+  opacity: 0.85;
 }
 
 .sidebar-footer p {
-  margin: 6px 0;
+  margin: 8px 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sidebar-footer i {
+  width: 18px;
+  text-align: center;
+  opacity: 0.75;
+}
+
+.sidebar-footer small {
+  display: block;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--green-500);
+  opacity: 0.65;
+  font-size: 0.95rem;
+}
+
+/* Filter hint for record type */
+.filter-hint {
+  display: block;
+  font-size: 0.95rem;
+  color: var(--green-300);
+  margin-top: 10px;
+  padding: 10px 14px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 6px;
+  line-height: 1.5;
+}
+
+.filter-hint i {
+  margin-right: 8px;
+  opacity: 0.85;
 }
 
 /* ---- Download Buttons ---- */

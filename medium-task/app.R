@@ -238,6 +238,11 @@ ui <- fluidPage(
       checkboxGroupInput("record_type", "Record Type",
                          choices = NULL, selected = NULL),
 
+      tags$small(class = "filter-hint",
+        tags$i(class = "fa-solid fa-info-circle"),
+        " MACHINE_OBSERVATION times may default to midnight"
+      ),
+
       hr(),
 
       h3(tags$i(class = "fa-solid fa-download"), " Downloads"),
@@ -247,8 +252,10 @@ ui <- fluidPage(
       hr(),
 
       div(class = "sidebar-footer",
-        p("Data: ecotourism package"),
-        p("GSoC 2026 Test Task")
+        p(tags$i(class = "fa-solid fa-database"), " Atlas of Living Australia"),
+        p(tags$i(class = "fa-solid fa-cloud"), " Bureau of Meteorology"),
+        p(tags$i(class = "fa-solid fa-plane"), " Tourism Research Australia"),
+        tags$small("ecotourism R package | GSoC 2026")
       )
     ),
 
@@ -437,6 +444,12 @@ server <- function(input, output, session) {
     n_species <- n_distinct(d$sci_name)
     yr_range <- paste(range(d$year), collapse = " - ")
     n_stations <- n_distinct(d$ws_id)
+
+    # Weather coverage - KEY METRIC for GSoC project goal
+    wx_coverage <- if (nrow(w) > 0) {
+      paste0(round(100 * sum(!is.na(w$temp)) / nrow(w), 0), "%")
+    } else "N/A"
+
     avg_temp <- if (sum(!is.na(w$temp)) > 0) {
       paste0(round(mean(w$temp, na.rm = TRUE), 1), "\u00B0C")
     } else "N/A"
@@ -455,8 +468,8 @@ server <- function(input, output, session) {
         span(class = "kpi-label", "Year Range")
       ),
       div(class = "kpi-card",
-        span(class = "kpi-value", n_stations),
-        span(class = "kpi-label", "Stations")
+        span(class = "kpi-value", wx_coverage),
+        span(class = "kpi-label", "Weather Coverage")
       ),
       div(class = "kpi-card",
         span(class = "kpi-value", avg_temp),
