@@ -7,7 +7,6 @@ _freeze/
 .quarto/
 
 # Private analysis (not for public repo)
-contributor-analysis/
 contribution-analysis/
 Proposal 2025/
-DIFFERENTIATION_STRATEGY.md
+CHANGES_SUMMARY.md
