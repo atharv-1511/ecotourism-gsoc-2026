@@ -1,4 +1,4 @@
-# Ecotourism GSoC 2026 — Contributor Test Tasks
+# Ecotourism GSoC 2026 - Contributor Test Tasks
 
 Three test tasks for the **ecotourism: update data package and create shiny app**
 project under the [R Project for Statistical Computing](https://github.com/rstats-gsoc/gsoc2026/wiki).
@@ -9,14 +9,14 @@ project under the [R Project for Statistical Computing](https://github.com/rstat
 
 ## Tasks
 
-### Easy Task — Tutorial
+### Easy Task - Tutorial
 
 A Quarto tutorial (`easy-task/ecotourism_tutorial.qmd`) built with the
 [unilur](https://github.com/ginolhac/unilur) extension. Renders two
 versions from a single source:
 
-- **Student version** — questions only, solutions hidden
-- **Solution version** — full code and output visible
+- **Student version** - questions only, solutions hidden
+- **Solution version** - full code and output visible
 
 **Focus:** Gouldian Finch sightings in the Northern Territory during
 September (end of dry season, peak birdwatching window).
