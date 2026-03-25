@@ -35,7 +35,7 @@ predict_sighting <- function(occurrence, weather_data,
   #                   ws_id, date, temp, max, prcp, rh, wind_speed
   #   n_days        - how many top days to return (default 5)
   #   forecast_horizon - how far ahead in days to project (default 365)
-¨  #   station_id    - specific weather station to model; if NULL we pick
+  #   station_id    - specific weather station to model; if NULL we pick
   #                   the station with the most sightings
   #   model_type    - "auto" (default): selects best model based on data
   #                   "poisson": standard Poisson GLM
