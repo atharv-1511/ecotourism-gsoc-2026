@@ -393,6 +393,119 @@ useful for ecological analysis and ecotourism planning.
 :::
 
 
+### Exercise 4 — Are sightings driven by tourism? (Observer Bias)
+
+This exercise tackles a critical question for ecotourism data: **Are high
+sighting counts reflecting actual organism activity, or simply more
+tourists with cameras?**
+
+This is called **observer bias** — the tendency for sighting data to
+reflect human activity patterns rather than wildlife behavior.
+
+**Tasks:**
+
+a) Join `gouldian_finch` to `tourism_quarterly` via `tourism_region`.
+b) Calculate correlation between quarterly sightings and tourism trips.
+c) If sightings spike in high-tourism quarters, what does that suggest?
+d) Compare weekday vs weekend sighting counts — who's recording: tourists
+   or local researchers?
+
+
+::: {.unilur-solution}
+
+```{r}
+#| label: q4-solution
+#| fig-width: 8
+#| fig-height: 5
+
+# Join occurrence to tourism data
+nt_tourism <- gouldian_finch |>
+  filter(obs_state == "Northern Territory") |>
+  mutate(quarter = quarter(date)) |>
+  left_join(tourism_region |> select(ws_id, region_id), by = "ws_id") |>
+  left_join(tourism_quarterly, by = c("region_id", "ws_id", "year", "quarter"))
+
+# Aggregate by year-quarter
+quarterly_summary <- nt_tourism |>
+  group_by(year, quarter) |>
+  summarise(
+    n_sightings = n(),
+    avg_trips = mean(trips, na.rm = TRUE),
+    .groups = "drop"
+  ) |>
+  filter(!is.na(avg_trips))
+
+# Calculate correlation
+cor_value <- cor(quarterly_summary$n_sightings,
+                 quarterly_summary$avg_trips,
+                 use = "complete.obs")
+
+cat("Correlation between sightings and tourism trips:", round(cor_value, 3), "\n")
+```
+
+```{r}
+#| label: q4-weekday-analysis
+
+# Weekday vs weekend analysis
+weekday_pattern <- gouldian_finch |>
+  filter(obs_state == "Northern Territory", month == 9) |>
+  mutate(
+    day_of_week = wday(date, label = TRUE),
+    is_weekend = wday(date) %in% c(1, 7)
+  ) |>
+  group_by(is_weekend) |>
+  summarise(
+    n_sightings = n(),
+    avg_per_day = n() / n_distinct(date),
+    .groups = "drop"
+  ) |>
+  mutate(day_type = ifelse(is_weekend, "Weekend", "Weekday"))
+
+weekday_pattern |>
+  select(day_type, n_sightings, avg_per_day) |>
+  kable(caption = "Sightings by day type (September, NT)") |>
+  kable_styling(bootstrap_options = c("striped", "hover"), full_width = FALSE)
+```
+
+```{r}
+#| label: q4-plot
+#| fig-width: 8
+#| fig-height: 5
+
+# Scatter plot: tourism vs sightings
+ggplot(quarterly_summary, aes(x = avg_trips, y = n_sightings)) +
+  geom_point(colour = "#D55E00", size = 3, alpha = 0.7) +
+  geom_smooth(method = "lm", se = TRUE, colour = "#0072B2", alpha = 0.2) +
+  annotate("text", x = max(quarterly_summary$avg_trips) * 0.8,
+           y = max(quarterly_summary$n_sightings) * 0.9,
+           label = paste("r =", round(cor_value, 2)),
+           size = 5, colour = "#333333") +
+  labs(
+    title = "Do More Tourists Mean More Sightings?",
+    subtitle = "Testing for observer bias in Gouldian Finch data",
+    x = "Average Tourism Trips (quarterly)",
+    y = "Number of Sightings"
+  ) +
+  theme_eco
+```
+
+**Interpretation:**
+
+A positive correlation suggests **observer bias** — sightings are partially
+driven by tourist presence, not just finch activity. This doesn't mean the
+sightings are invalid, but it's important context:
+
+- High sighting counts in tourist seasons may overrepresent those periods
+- Low counts in off-seasons may reflect fewer observers, not fewer birds
+- Weekend spikes (if present) suggest recreational birdwatchers dominate
+
+For the ecotourism package, this means **sighting data should be interpreted
+with caution**. A GSoC 2026 enhancement could include observer effort
+correction factors.
+
+:::
+
+
 ## Finishing up
 
 In this tutorial you used three different join types, each answering a

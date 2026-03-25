@@ -21,13 +21,14 @@ versions from a single source:
 **Focus:** Gouldian Finch sightings in the Northern Territory during
 September (end of dry season, peak birdwatching window).
 
-**Three exercises using different join types:**
+**Four exercises using different join types:**
 
 | Exercise | Join | What it teaches |
 |----------|------|-----------------|
 | 1 | `inner_join` | Match sightings with weather — understand data loss |
 | 2 | `left_join` | Add tourism data + region names via `tourism_region` |
 | 3 | `anti_join` | Find stations with sightings but no weather records |
+| 4 | `left_join` | **Observer Bias Analysis** — Are sightings driven by tourism? |
 
 Includes interactive exploration (DT datatable, Leaflet map, plotly chart)
 and a faceted ggplot2 visualisation.
@@ -64,26 +65,37 @@ The prediction function from the hard task is embedded in the app.
 
 ### Hard Task — Prediction Function
 
-A GLM-based prediction function (`hard-task/predict_sighting.R`) that
-identifies the best upcoming days to spot an organism.
+Advanced prediction functions (`hard-task/predict_sighting.R`) for wildlife
+sighting optimization with novel statistical approaches.
 
-**Approach:**
+**Features:**
 
-1. Aggregate daily sighting counts at the busiest weather station
-2. Join with weather data (explicit zeros for days with no sightings)
-3. Fit a Poisson GLM; if overdispersed, refit as negative binomial
-4. Project forward using climatological normals (historical weather averages)
-5. Rank future dates by predicted sighting count with 95% confidence intervals
+1. **Automatic Model Selection** — Chooses optimal model based on data:
+   - Poisson GLM for well-behaved counts
+   - Negative Binomial for overdispersed data
+   - Zero-Inflated Poisson (ZIP) for excess zeros
+   - Zero-Inflated Negative Binomial (ZINB) — most flexible
 
-**Function signature:**
+2. **Future Date Projection** — Uses climatological normals to predict
+   365 days ahead with 95% confidence intervals
+
+3. **Spatial Hotspot Prediction** — Novel `predict_hotspots()` function
+   identifies WHERE to spot organisms, not just WHEN
+
+**Function signatures:**
 
 ```r
+# Temporal prediction (WHEN)
 predict_sighting(occurrence, weather_data, n_days = 5,
-                 forecast_horizon = 365, station_id = NULL)
+                 forecast_horizon = 365, station_id = NULL,
+                 model_type = c("auto", "poisson", "negbin", "zip", "zinb"))
+
+# Spatial prediction (WHERE)
+predict_hotspots(occurrence, weather_data, n_hotspots = 5,
+                 min_sightings = 10, cluster_radius_km = 50)
 ```
 
-Both occurrence and weather are explicit parameters. Returns a tibble with
-ranked dates, predicted counts, confidence bounds, and expected weather.
+Both functions return tibbles with ranked predictions and model metadata.
 
 A demo document (`hard-task/hard_task_demo.qmd`) runs the function across
 all four organisms with ecological interpretation.
