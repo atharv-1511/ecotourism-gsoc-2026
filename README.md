@@ -65,40 +65,40 @@ The prediction function from the hard task is embedded in the app.
 
 ### Hard Task — Prediction Function
 
-Advanced prediction functions (`hard-task/predict_sighting.R`) for wildlife
-sighting optimization with novel statistical approaches.
+Count regression function (`hard-task/predict_sighting.R`) for predicting
+optimal wildlife sighting days based on historical weather patterns and GLM.
 
-**Features:**
+**Core Function: `predict_sighting()`**
 
-1. **Automatic Model Selection** — Chooses optimal model based on data:
-   - Poisson GLM for well-behaved counts
-   - Negative Binomial for overdispersed data
-   - Zero-Inflated Poisson (ZIP) for excess zeros
-   - Zero-Inflated Negative Binomial (ZINB) — most flexible
+Fits a generalized linear model on daily sighting counts joined with weather
+data, then predicts the top days for wildlife sightings in the next year using
+climatological weather normals.
 
-2. **Future Date Projection** — Uses climatological normals to predict
-   365 days ahead with 95% confidence intervals
+**Model Selection:**
 
-3. **Spatial Hotspot Prediction** — Novel `predict_hotspots()` function
-   identifies WHERE to spot organisms, not just WHEN
+- **Auto mode** (default): Poisson GLM, switches to Negative Binomial if data
+  shows overdispersion (Pearson χ² / df > 1.5)
+- **Manual modes**: Specify `model_type = "poisson"` or `"negbin"` directly
 
-**Function signatures:**
+**Function signature:**
 
 ```r
-# Temporal prediction (WHEN)
-predict_sighting(occurrence, weather_data, n_days = 5,
-                 forecast_horizon = 365, station_id = NULL,
-                 model_type = c("auto", "poisson", "negbin", "zip", "zinb"))
-
-# Spatial prediction (WHERE)
-predict_hotspots(occurrence, weather_data, n_hotspots = 5,
-                 min_sightings = 10, cluster_radius_km = 50)
+predict_sighting(occurrence, weather_data,
+                 n_days = 5, forecast_horizon = 365,
+                 station_id = NULL,
+                 model_type = c("auto", "poisson", "negbin"))
 ```
 
-Both functions return tibbles with ranked predictions and model metadata.
+**Returns:** Tibble with ranked daily predictions, 95% CIs, and weather features.
 
 A demo document (`hard-task/hard_task_demo.qmd`) runs the function across
 all four organisms with ecological interpretation.
+
+**Helper Functions:**
+
+- `plot_predictions()` — Bar chart of top predicted days with error bars
+- `plot_weather_effect()` — Scatter plot showing weather-sighting relationship
+- `plot_model_diagnostics()` — Residual diagnostics for fitted model
 
 ## Setup
 
