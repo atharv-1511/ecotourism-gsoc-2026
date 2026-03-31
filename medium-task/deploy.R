@@ -13,7 +13,7 @@ shiny::runApp()
 cat("\n=== DEPLOYMENT TO SHINYAPPS.IO ===\n\n")
 
 # SECURITY WARNING
-cat("⚠️  IMPORTANT SECURITY NOTICE ⚠️\n")
+cat("IMPORTANT SECURITY NOTICE\n")
 cat("Your previous token was exposed publicly.\n")
 cat("You MUST revoke it and generate a new one:\n")
 cat("1. Visit https://www.shinyapps.io/admin/\n")
@@ -42,7 +42,7 @@ rsconnect::setAccountInfo(
   secret = secret
 )
 
-cat("✅ Account configured successfully\n\n")
+cat("Account configured successfully\n\n")
 
 # Deploy
 cat("Starting deployment...\n")
@@ -55,7 +55,7 @@ rsconnect::deployApp(
   forceUpdate = TRUE
 )
 
-cat("\n✅ DEPLOYMENT COMPLETE!\n\n")
+cat("\nDEPLOYMENT COMPLETE!\n\n")
 cat("Your app is now live at:\n")
 cat("https://ecotourism-atharvraskar.shinyapps.io/medium-task/\n\n")
 
