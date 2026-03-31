@@ -15,13 +15,13 @@
 
 ## What I Have Already Built (Test Tasks)
 
-### Easy Task: Tutorial ✅
+### Easy Task: Tutorial
 - Quarto tutorial using **all 3 join types** (inner, left, anti)
 - Interactive elements: DT datatable, Leaflet map, Plotly charts
 - Proper unilur format with student/solution versions
 - Identifies data gaps using `anti_join()` — directly relevant to project goal
 
-### Medium Task: Shiny App ✅
+### Medium Task: Shiny App
 - 4-tab interface: Explorer, Predictions, Tourism, Time Analysis
 - **Weather Coverage KPI** — surfaces the core data problem
 - Hour × Month heatmap for optimal viewing times
@@ -29,7 +29,7 @@
 - Download handlers for data and charts
 - Professional CSS with responsive design
 
-### Hard Task: Prediction Function ✅
+### Hard Task: Prediction Function
 - `predict_sighting()` with future date projection
 - Overdispersion detection: auto-switches Poisson → Negative Binomial
 - 95% confidence intervals on predictions
@@ -81,8 +81,8 @@ validate_occurrence()
 
 | Enhancement | Status | Priority |
 |-------------|--------|----------|
-| Core functionality | ✅ Done | — |
-| Weather coverage display | ✅ Done | — |
+| Core functionality | Done | — |
+| Weather coverage display | Done | — |
 | Species-level drilling | Planned | Medium |
 | Data quality dashboard | Planned | High |
 | Export formats (Excel, GeoJSON) | Planned | Medium |
