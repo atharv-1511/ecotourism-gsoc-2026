@@ -87,7 +87,7 @@ predict_sighting <- function(occurrence, weather_data,
   # Important: LEFT JOIN weather to counts preserves zeros for no-sighting days
   wx_stn <- weather_data %>%
     filter(ws_id == station_id) %>%
-    select(date, temp, max, prcp, rh, wind_speed)
+    dplyr::select(date, temp, max, prcp, rh, wind_speed)
 
   if (nrow(wx_stn) < 30)
     stop("Fewer than 30 weather records at station ", station_id,
@@ -195,7 +195,7 @@ predict_sighting <- function(occurrence, weather_data,
       best_hour   = modal_hour,
       ws_id       = station_id
     ) %>%
-    select(rank, date, day_of_week, best_hour,
+    dplyr::select(rank, date, day_of_week, best_hour,
            predicted_count, confidence_lower, confidence_upper,
            temp, prcp, rh, wind_speed, ws_id)
 
